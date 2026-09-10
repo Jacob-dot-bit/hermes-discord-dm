@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv sh
+# Auto-starts services that are not supervised by s6-rc and would otherwise need a
+# manual command after every container restart. Runs once per container start via
+# s6-overlay's cont-init.d mechanism.
+
+# 1. iron-proxy (egress proxy) — needed by the terminal sandbox's outbound network.
+hermes egress start 2>&1 || true
+
+# 2. Discord presence-tracking daemon — separate gateway session (GUILD_PRESENCES),
+# writes a cache file the discord_dm tool's list_online action reads.
+mkdir -p /opt/data/logs
+/opt/hermes/.venv/bin/python3 /opt/hermes/discord_presence_daemon.py \
+    >> /opt/data/logs/presence-daemon.log 2>&1 &
