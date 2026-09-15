@@ -4,6 +4,15 @@
 # s6-overlay's cont-init.d mechanism.
 
 # 1. iron-proxy (egress proxy) — needed by the terminal sandbox's outbound network.
+# A `docker restart` (not a full recreate via start-hermes.sh) gives the
+# container a fresh PID namespace, so any pid recorded in this pidfile from
+# before the restart can never be alive in it — the file, if present at all
+# here, is always stale, never a real "already running" case. Without this,
+# `hermes egress start` refuses to start ("Another iron-proxy start appears
+# to be in progress"), silently breaking every tool needing outbound network
+# until someone notices and clears it by hand (see MIGRATION.md, hit live
+# 2026-09-15 after a plain `docker restart hermes`).
+rm -f /opt/data/proxy/iron-proxy.pid
 hermes egress start 2>&1 || true
 
 # 2. Discord presence-tracking daemon — separate gateway session (GUILD_PRESENCES),
